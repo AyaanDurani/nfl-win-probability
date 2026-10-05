@@ -1,0 +1,16 @@
+[project]
+name = "nfl-win-probability"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "nflreadpy",
+    "polars",
+    "pandas",
+    "pyarrow",
+    "scikit-learn",
+    "lightgbm",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev =  ["pytest" , "jupyter"]

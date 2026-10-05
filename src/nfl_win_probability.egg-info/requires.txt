@@ -1,0 +1,11 @@
+nflreadpy
+polars
+pandas
+pyarrow
+scikit-learn
+lightgbm
+matplotlib
+
+[dev]
+pytest
+jupyter
