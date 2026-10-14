@@ -41,7 +41,7 @@ FEATURE_COLS = [
 #   ID columns let us split by season (CP4) and look up specific games
 #   "wp" is nflfastR's prediction
 ID_COLS = ["game_id", "season", "play_id", "posteam", "home_team", "away_team"]
-BENCHMARK_COLS = ["wp"]
+BENCHMARK_COLS = ["wp", "vegas_wp"]
 LABEL_COL = "label"
 
 
