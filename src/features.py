@@ -15,7 +15,7 @@ import polars as pl
 from src.data import load_pbp
 
 
-#find the project root from this file's location
+
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
 FEATURES_PATH = PROCESSED_DIR / "features.parquet"
 
@@ -42,6 +42,7 @@ FEATURE_COLS = [
 #   "wp" is nflfastR's prediction
 ID_COLS = ["game_id", "season", "play_id", "posteam", "home_team", "away_team"]
 BENCHMARK_COLS = ["wp", "vegas_wp"]
+CONTEXT_COLS = ["qtr", "desc"]
 LABEL_COL = "label"
 
 
@@ -80,10 +81,9 @@ def add_second_half_receiver(pbp: pl.DataFrame) -> pl.DataFrame:
 def build_features(pbp: pl.DataFrame) -> pl.DataFrame:
     """Turn raw play-by-play into the model-ready feature table."""
 
-    # Step 1 (see above). Must come first.
     df = add_second_half_receiver(pbp)
 
-    # Step 2: keep only real plays from games that had a winner.
+
     df = df.filter(
         pl.col("down").is_not_null()          # no down = not a play
         & pl.col("posteam").is_not_null()     # need to know who has the ball
@@ -94,7 +94,7 @@ def build_features(pbp: pl.DataFrame) -> pl.DataFrame:
     # Defining it once avoids typing the comparison three times.
     is_home = pl.col("posteam") == pl.col("home_team")
 
-    # Step 3: flip home-perspective columns into the offense's perspective.
+    #flip home-perspective columns into the offense's perspective.
     df = df.with_columns(
         is_home.cast(pl.Int8).alias("is_home"),
 
@@ -120,7 +120,7 @@ def build_features(pbp: pl.DataFrame) -> pl.DataFrame:
         .alias("elapsed_share"),
     )
 
-    # Step 4: engineered features. This is a SEPARATE with_columns because
+    #engineered features. This is a SEPARATE with_columns because
     # Polars computes everything inside one with_columns at the same time,
     # so they can't use posteam_spread or elapsed_share, which were only
     # created in the block above.
@@ -130,8 +130,7 @@ def build_features(pbp: pl.DataFrame) -> pl.DataFrame:
         (pl.col("score_differential") / decay).alias("diff_time_ratio"),
     )
 
-    # Keep only the columns we need, in a fixed order
-    return df.select(ID_COLS + FEATURE_COLS + BENCHMARK_COLS + [LABEL_COL])
+    return df.select(ID_COLS + FEATURE_COLS + BENCHMARK_COLS + CONTEXT_COLS + [LABEL_COL])
 
 
 if __name__ == "__main__":
@@ -143,9 +142,7 @@ if __name__ == "__main__":
     print("Building features...")
     features = build_features(pbp)
 
-    # Drop rows with a missing feature or label, and SAY how many.
-    # Silently dropping rows is how datasets quietly shrink without anyone
-    # noticing. Always report it.
+
     before = features.height
     features = features.drop_nulls(subset=FEATURE_COLS + [LABEL_COL])
     print(f"Dropped {before - features.height:,} rows with missing values")
